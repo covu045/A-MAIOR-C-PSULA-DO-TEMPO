@@ -1,325 +1,136 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>A Maior Cápsula do Tempo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>A Maior Cápsula do Tempo</title>
 
-<style>
-:root{
---primary:#00ff88;
---secondary:#00ccff;
-}
-
-body{
-margin:0;
-font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
-background:linear-gradient(180deg,#000,#111827);
-color:white;
-text-align:center;
-overflow-x:hidden;
-}
-
-/* HERO */
-.hero{
-padding:120px 20px;
-animation:fadeUp 1.5s ease;
-}
-
-@keyframes fadeUp{
-from{opacity:0; transform:translateY(40px);}
-to{opacity:1; transform:translateY(0);}
-}
-
-h1{
-font-size:clamp(2rem,6vw,4rem);
-background:linear-gradient(90deg,var(--primary),var(--secondary));
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
-}
-
-.sub{
-color:#aaa;
-font-size:1.3rem;
-}
-
-.vagas{
-margin-top:15px;
-font-size:1.2rem;
-color:#00ff88;
-font-weight:bold;
-}
-
-.cta{
-margin-top:30px;
-background:linear-gradient(90deg,var(--primary),#00cc66);
-color:black;
-padding:18px 50px;
-border:none;
-border-radius:50px;
-font-weight:bold;
-font-size:1.1rem;
-cursor:pointer;
-transition:0.4s;
-}
-
-.cta:hover{
-transform:scale(1.08);
-box-shadow:0 0 25px var(--primary),0 0 50px var(--secondary);
-}
-
-/* FORM */
-.form-section{
-padding:60px 20px;
-display:none;
-}
-
-input{
-width:100%;
-max-width:400px;
-padding:14px;
-margin:10px auto;
-display:block;
-border-radius:10px;
-border:none;
-background:#1f2937;
-color:white;
-}
-
-.checkbox{
-display:flex;
-justify-content:center;
-align-items:center;
-gap:8px;
-margin-top:10px;
-font-size:0.9rem;
-}
-
-/* MURAL */
-.mural{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-gap:25px;
-padding:60px 20px;
-max-width:1200px;
-margin:auto;
-}
-
-.participante{
-position:relative;
-background:#111;
-padding:10px;
-border-radius:20px;
-opacity:0;
-transform:translateY(30px);
-animation:fadeIn 1s forwards;
-}
-
-@keyframes fadeIn{
-to{opacity:1; transform:translateY(0);}
-}
-
-.participante img{
-width:100%;
-aspect-ratio:1/1;
-object-fit:cover;
-border-radius:15px;
-transition:0.4s;
-}
-
-.participante:hover img{
-transform:scale(1.08);
-box-shadow:0 0 20px var(--primary),0 0 40px var(--secondary);
-}
-
-.rank{
-position:absolute;
-top:10px;
-right:10px;
-background:var(--primary);
-color:black;
-font-weight:bold;
-padding:5px 10px;
-border-radius:20px;
-font-size:0.8rem;
-}
-
-.selo{
-position:absolute;
-top:10px;
-left:10px;
-background:gold;
-color:black;
-font-size:0.7rem;
-padding:5px 10px;
-border-radius:20px;
-}
-
-.bloqueado{
-background:red;
-color:white;
-padding:15px;
-border-radius:10px;
-margin-top:20px;
-}
-
-footer{
-padding:50px 20px;
-color:#666;
-}
-</style>
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#000000" />
 </head>
 
 <body>
+  <div class="bg-glow"></div>
 
-<section class="hero">
-<h1>A MAIOR CÁPSULA DO TEMPO</h1>
-<p class="sub">🔥 Gratuito para os 100 primeiros</p>
+  <main class="wrap">
+    <section class="hero">
+      <h1 class="title">A MAIOR CÁPSULA DO TEMPO</h1>
 
-<div class="vagas">
-⚠️ Restam apenas <span id="restantes">100</span> vagas
+      <div class="hero-info">
+        <p class="line">
+          <span class="emoji">🔥</span>
+          <span>Gratuito para os 100 primeiros (Pioneiros)</span>
+        </p>
+
+        <p class="line warning">
+          <span class="emoji">⚠️</span>
+          <span id="vagasTexto">Carregando...</span>
+        </p>
+
+        <button id="btnQuero" class="btn-cta">QUERO FAZER HISTÓRIA</button>
+
+        <button id="btnVerMinha" class="btn-ghost hidden">VER MINHA FOTO NO MURAL</button>
+      </div>
+    </section>
+
+    <!-- MODAL ENVIO -->
+    <div id="modal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Entrar no Mural</h3>
+          <button id="fecharModal" class="x">✕</button>
+        </div>
+
+        <form id="form" class="form">
+          <label class="lbl">Seu nome (vai aparecer no mural)</label>
+          <input id="nome" class="inp" maxlength="40" placeholder="Ex: Mateus Ayala" required />
+
+          <label class="lbl">Mensagem para o futuro (opcional – até 240)</label>
+          <textarea id="mensagem" class="inp" maxlength="240" rows="4"
+            placeholder="Ex: Se você estiver lendo isso no futuro..."></textarea>
+          <p class="hint">Essa mensagem ficará pública junto da sua foto.</p>
+
+          <label class="lbl">Sua foto (JPG/PNG)</label>
+          <input id="foto" class="inp" type="file" accept="image/*" required />
+
+          <label class="check">
+            <input id="termos" type="checkbox" required />
+            <span>
+              Eu li e aceito os
+              <a class="termosLink" href="./termos.html" target="_blank" rel="noopener">Termos de Uso</a>
+              (autorizo o uso da minha imagem no mural e entendo que o site não se responsabiliza por envios de terceiros).
+            </span>
+          </label>
+
+          <!-- Pagamento (aparece só depois de 100 pioneiros aprovados) -->
+          <div id="pagamentoBox" class="pay hidden">
+            <p class="payTitle">Após os 100 pioneiros, o envio custa <strong>R$ 1,00</strong>.</p>
+            <p class="payText">Faça o Pix e envie o comprovante (print) abaixo para liberação.</p>
+
+            <div class="payRow">
+              
+  <div class="payCode" id="payCode" data-pix="c616ef49-60b6-42eb-acc9-0ef28dc2de56">
+    PIX (chave): <span id="pixText">c616ef49-60b6-42eb-acc9-0ef28dc2de56</span>
+  </div>
+
+  <button type="button" id="btnCopyPix" class="btn-copy">COPIAR</button>
 </div>
 
-<button class="cta" onclick="abrirFormulario()">QUERO FAZER HISTÓRIA</button>
-</section>
 
-<section class="form-section" id="form">
+            <label class="lbl">Comprovante (print) – obrigatório</label>
+            <input id="comprovante" class="inp" type="file" accept="image/*" />
+          </div>
 
-<form action="https://formsubmit.co/eternonanat@gmail.com" method="POST" enctype="multipart/form-data">
-<input type="hidden" name="_template" value="table">
-<input type="text" name="nome" placeholder="Seu nome/apelido" required>
-<input type="email" name="email" placeholder="Seu e-mail" required>
-<input type="text" name="Cidade" placeholder="Sua cidade - Estado">
-<input type="tel" name="WhatsApp" placeholder="Seu WhatsApp" required>
-<input type="file" name="Foto" accept="image/*" required>
+          <div id="previewWrap" class="preview hidden">
+            <img id="previewImg" alt="preview" />
+          </div>
 
-                <p>Tamanho Max 10mp<p>
+          <p id="msg" class="msg"></p>
 
-<p>☝️ Escolha a foto que deseja enviar ao site ☝️</p>
-<p>Aviso: Após enviar sua foto aparece em até 24h</p>
+          <button id="enviar" class="btn-cta" type="submit">ENVIAR</button>
+        </form>
+      </div>
+    </div>
 
+    <!-- MURAL -->
+    <section id="mural" class="mural">
+      <h2 class="subtitle"><span class="emoji">🔥</span> MURAL DA ETERNIDADE</h2>
+      <div id="grid" class="grid"></div>
+    </section>
 
-<div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0;">
-    <input type="checkbox" id="termos" name="termos" required style="width:auto;">
-    <label for="termos" style="color:white; font-size:14px; cursor:pointer;">
-        Li os termos e aceito participar.
-    </label>
-</div>
+    <!-- MODAL SURPRESA (CLICOU NA FOTO) -->
+    <div id="modalView" class="modal hidden">
+      <div class="modal-card modal-view">
+        <div class="modal-head">
+          <h3 id="viewTitle">Registro</h3>
+          <button id="fecharView" class="x">✕</button>
+        </div>
 
-<input type="hidden" name="_captcha" value="false">
-<input type="hidden" name="_subject" value="Novo participante - Cápsula do Tempo">
+        <div class="viewBody">
+          <div class="viewImgWrap">
+            <img id="viewImg" alt="Foto" />
+            <div class="viewBadges">
+              <span id="viewSelo" class="badge-left">MEMBRO</span>
+              <span id="viewNum" class="badge-right">∞</span>
+            </div>
+          </div>
 
-<button type="submit" class="cta">ENVIAR GRATUITAMENTE</button>
-<p>Restam 94 envios gratuitos</p>
+          <div class="viewText">
+            <h4 id="viewNome" class="viewNome"></h4>
+            <p id="viewMsg" class="viewMsg"></p>
+            <p id="viewData" class="viewData"></p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-</form>
+    <footer class="footer">
+      Projeto Independente por Mateus Ayala © <span id="ano"></span>
+      · <a class="footerLink" href="./admin.html" target="_blank" rel="noopener">Admin</a>
+    </footer>
+  </main>
 
-
-<div id="bloqueadoMsg" class="bloqueado" style="display:none;">
-🚫 As 100 vagas foram preenchidas.
-</div>
-
-</section>
-
-<h2>🔥 MURAL DA ETERNIDADE</h2>
-
-<div class="mural" id="mural">
-
-        <div class="participante">
-<div class="rank">#6</div>
-<div class="selo">PIONEIRO</div>
-<img src="6.jpg">
-<p>LUAN GONCALVES AYALA</p>
-</div>
-
-    <div class="participante">
-<div class="rank">#5</div>
-<div class="selo">PIONEIRO</div>
-<img src="5.jpg">
-<p>Rosa Maria Vitoria Pereira</p>
-</div>
-
-    <div class="participante">
-<div class="rank">#4</div>
-<div class="selo">PIONEIRO</div>
-<img src="4.jpg">
-<p>Ramao Oliveira</p>
-</div>
-
-    <div class="participante">
-<div class="rank">#3</div>
-<div class="selo">PIONEIRO</div>
-<img src="3.jpg">
-<p>Maria ines</p>
-</div>
-
-<div class="participante">
-<div class="rank">#2</div>
-<div class="selo">PIONEIRO</div>
-<img src="2.jpg">
-<p>Daiane ce</p>
-</div>
-
-<div class="participante">
-<div class="rank">#1</div>
-<div class="selo">PIONEIRO</div>
-<img src="1.jpg">
-<p>Mateus Ayala</p>
-</div>
-
-</div>
-
-<footer>
-Projeto Independente por Mateus Ayala © 2026
-</footer>
-
-<script>
-
-function abrirFormulario(){
-document.getElementById("form").style.display="block";
-document.getElementById("form").scrollIntoView({behavior:"smooth"});
-}
-
-/* CONTROLE DE VAGAS */
-let totalVagas = 100;
-let inscritos = document.querySelectorAll(".participante").length;
-let restantes = totalVagas - inscritos;
-
-document.getElementById("restantes").innerText = restantes;
-
-if(restantes <= 0){
-document.querySelector("form").style.display="none";
-document.getElementById("bloqueadoMsg").style.display="block";
-}
-
-</script>
-
-<!-- MÚSICA DE FUNDO -->
-<audio id="bgMusic" autoplay loop>
-    <source src="musica.mp3" type="audio/mpeg">
-</audio>
-
-<script>
-
-// Tocar música automaticamente ao entrar
-window.addEventListener("load", function() {
-    let musica = document.getElementById("bgMusic");
-
-    musica.volume = 0; // começa zerada
-    musica.play();
-
-    // Fade in suave (sobe o volume devagar)
-    let fade = setInterval(() => {
-        if (musica.volume < 0.4) {
-            musica.volume += 0.02;
-        } else {
-            clearInterval(fade);
-        }
-    }, 200);
-});
-
-</script>
-
-
+  <script type="module" src="./app.js"></script>
 </body>
 </html>

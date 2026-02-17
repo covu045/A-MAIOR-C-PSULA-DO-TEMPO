@@ -1,43 +1,60 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Termos de Uso</title>
-<style>
-body{
-    font-family:Arial;
-    max-width:800px;
-    margin:auto;
-    padding:40px;
-    line-height:1.6;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Termos de Uso - A Maior Cápsula do Tempo</title>
+  <style>
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#0b1220;color:#eaf2ff}
+    .wrap{max-width:900px;margin:0 auto;padding:22px}
+    h1{margin:0 0 10px;color:#00ffd1}
+    h2{margin:18px 0 8px}
+    p,li{line-height:1.55;color:rgba(255,255,255,.86)}
+    .box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin:14px 0}
+    .muted{color:rgba(255,255,255,.6);font-size:13px}
+    a{color:#00ffd1}
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <h1>Termos de Uso</h1>
+    <p class="muted">Última atualização: <span id="data"></span></p>
 
-<h1>Termos de Uso</h1>
+    <div class="box">
+      <p><strong>Resumo:</strong> Ao enviar sua foto, nome e (opcionalmente) uma mensagem, você autoriza a exibição pública no mural do site. Você declara ter direito de usar a imagem enviada. O site pode moderar e remover conteúdos inadequados.</p>
+    </div>
 
-<p>Ao participar da Cápsula do Tempo Digital, o usuário declara que:</p>
+    <h2>1) Participação</h2>
+    <p>Ao participar, você envia <strong>nome</strong>, <strong>imagem</strong> e, se quiser, uma <strong>mensagem</strong> para compor o “Mural da Eternidade”.</p>
 
-<ul>
-<li>É maior de 18 anos;</li>
-<li>Possui direito sobre a imagem enviada;</li>
-<li>Possui autorização das pessoas que aparecem na imagem;</li>
-<li>Autoriza a publicação pública permanente;</li>
-<li>O pagamento é voluntário e não reembolsável;</li>
-<li>Não enviará conteúdo ilegal, adulto, ofensivo ou protegido por direitos autorais.</li>
-</ul>
+    <h2>2) Uso de imagem e mensagem</h2>
+    <p>Você autoriza o site a <strong>armazenar</strong> e <strong>exibir publicamente</strong> a imagem e o texto enviados, apenas para fins do projeto/mural. Você declara ser o titular da imagem ou possuir permissão do titular.</p>
 
-<h2>Responsabilidade</h2>
-<p>O participante é totalmente responsável pelo conteúdo enviado.</p>
+    <h2>3) Conteúdo proibido</h2>
+    <p>É proibido enviar: nudez, conteúdo sexual, violência extrema, discurso de ódio, conteúdo ilegal, assédio, ou imagens de terceiros sem autorização. Envios fora das regras podem ser recusados/removidos.</p>
 
-<h2>Privacidade</h2>
-<p>Coletamos apenas dados enviados voluntariamente (imagem e contato).</p>
+    <h2>4) Moderação</h2>
+    <p>O site pode <strong>aprovar, recusar, remover</strong> ou solicitar substituição de qualquer envio para manter a segurança e o objetivo do projeto.</p>
 
-<h2>Remoção</h2>
-<p>O administrador pode remover conteúdos que violem estes termos.</p>
+    <h2>5) Responsabilidade</h2>
+    <p>O site <strong>não se responsabiliza</strong> por envios feitos por usuários (conteúdo de terceiros). Cada usuário é responsável pelo que envia e pelas permissões de uso.</p>
 
-<p>Ao participar, você concorda integralmente com estes termos.</p>
+    <h2>6) Pagamento após os 100 pioneiros</h2>
+    <p>Os <strong>100 primeiros aprovados</strong> podem receber o selo <strong>PIONEIRO</strong> e envio gratuito. Após isso, o envio pode exigir <strong>pagamento de R$ 1,00</strong> e o conteúdo pode ficar pendente até validação.</p>
 
+    <h2>7) Privacidade</h2>
+    <p>O mural exibe publicamente <strong>nome</strong>, <strong>imagem</strong> e (se enviada) a <strong>mensagem</strong>. Não envie dados sensíveis (CPF, endereço, etc.).</p>
+
+    <h2>8) Remoção por solicitação</h2>
+    <p>Se você quiser remover sua imagem/mensagem do mural, solicite ao administrador do projeto informando seu nome e a data aproximada do envio.</p>
+
+    <div class="box muted">
+      <p>Este documento é um modelo simples e não substitui orientação jurídica.</p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("data").textContent = new Date().toLocaleDateString("pt-BR");
+  </script>
 </body>
 </html>

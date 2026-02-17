@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Admin - Cápsula do Tempo</title>
+  <link rel="stylesheet" href="./style.css" />
+  <meta name="theme-color" content="#000000" />
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <main class="wrap">
+    <section class="hero" style="padding-bottom:20px;">
+      <h1 class="title" style="font-size: clamp(22px, 3.2vw, 40px);">ADMIN · CÁPSULA DO TEMPO</h1>
+
+      <div class="hero-info">
+        <p class="line"><span class="emoji">🔒</span><span>Somente o administrador pode aprovar/remover</span></p>
+
+        <div class="admin-actions">
+          <button id="btnLogin" class="btn-cta">ENTRAR COM GOOGLE</button>
+          <button id="btnLogout" class="btn-ghost hidden">SAIR</button>
+        </div>
+
+        <p id="adminStatus" class="line" style="opacity:.9;"></p>
+      </div>
+    </section>
+
+    <section class="mural" style="padding-top:10px;">
+      <h2 class="subtitle">PENDENTES (gratuito e pago)</h2>
+      <div id="pendentes" class="admin-list"></div>
+    </section>
+
+    <section class="mural">
+      <h2 class="subtitle">APROVADOS (mural público)</h2>
+      <div id="aprovados" class="admin-list"></div>
+    </section>
+
+    <footer class="footer">
+      Admin © <span id="ano"></span>
+    </footer>
+  </main>
+
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>
