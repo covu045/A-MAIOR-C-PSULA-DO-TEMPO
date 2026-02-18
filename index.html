@@ -2,92 +2,98 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>A Maior Cápsula do Tempo</title>
 
   <link rel="stylesheet" href="./style.css"/>
   <link rel="manifest" href="./manifest.json"/>
-  <meta name="theme-color" content="#000000" />
+  <meta name="theme-color" content="#000000"/>
 </head>
 
 <body>
   <div class="bg-glow"></div>
 
   <main class="wrap">
+
     <section class="hero">
       <h1 class="title">A MAIOR CÁPSULA DO TEMPO</h1>
 
       <div class="hero-info">
-        <p class="line"><span class="emoji">🔥</span><span>Gratuito para os 100 primeiros (PIONEIROS)</span></p>
+        <p class="line">
+          <span class="emoji">🔥</span>
+          <span>Gratuito para os 100 primeiros (PIONEIROS)</span>
+        </p>
 
         <p class="line warning">
           <span class="emoji">⚠️</span>
-          <span id="vagasTexto">Carregando...</span>
+          <span id="vagasTexto">Carregando vagas...</span>
         </p>
 
         <button id="btnQuero" class="btn-cta">QUERO FAZER HISTÓRIA</button>
-
         <button id="btnVerMinha" class="btn-ghost hidden">VER MINHA FOTO NO MURAL</button>
       </div>
     </section>
 
-    <!-- MODAL ENVIO -->
-    <div id="modal" class="modal hidden">
+    <!-- MODAL ENVIAR -->
+    <div id="modalEnviar" class="modal hidden">
       <div class="modal-card">
         <div class="modal-head">
           <h3>Entrar no Mural</h3>
-          <button id="fecharModal" class="x">✕</button>
+          <button id="fecharEnviar" class="x">✕</button>
         </div>
 
         <form id="form" class="form">
-          <label class="lbl">Seu nome (vai ficar público)</label>
-          <input id="nome" class="inp" maxlength="40" placeholder="Ex: Daiane Ayala" required />
+          <label class="lbl">Nome (vai aparecer publicamente)</label>
+          <input id="nome" class="inp" maxlength="40" placeholder="Ex: Maria Silva" required />
 
-          <label class="lbl">Sua foto (JPG/PNG) — vamos comprimir automático</label>
-          <input id="foto" class="inp" type="file" accept="image/*" required />
-
-          <label class="lbl">Mensagem para o futuro (opcional — até 240 caracteres)</label>
+          <label class="lbl">Mensagem para o futuro (opcional – fica pública)</label>
           <textarea id="mensagem" class="inp" maxlength="240" rows="3"
-            placeholder="Escreva algo que ficará público junto da sua foto."></textarea>
+            placeholder="Ex: Se você está lendo isso… eu existi em 2026."></textarea>
+          <p class="hint">Máx 240 caracteres. Sem links.</p>
 
-          <!-- MODO MEMORIAL (opcional) -->
           <label class="check">
             <input id="memorial" type="checkbox" />
-            <span>🕯️ Em memória de alguém (modo memorial)</span>
+            <span>🕯️ Modo memorial (em memória de alguém)</span>
           </label>
 
-          <p class="mutedSmall">“Essa mensagem ficará pública junto da sua foto.”</p>
+          <div id="memorialBox" class="memorial hidden">
+            <label class="lbl">Em memória de (nome)</label>
+            <input id="memorialPara" class="inp" maxlength="40" placeholder="Ex: João da Silva"/>
+            <p class="hint">Isso também fica público no modal.</p>
+          </div>
+
+          <label class="lbl">Sua foto (JPG/PNG)</label>
+          <input id="foto" class="inp" type="file" accept="image/*" required />
+
+          <div id="previewWrap" class="preview hidden">
+            <img id="previewImg" alt="preview" />
+          </div>
 
           <label class="check">
             <input id="termos" type="checkbox" required />
             <span>
               Eu li e aceito os
-              <a class="termosLink" href="./termos.html" target="_blank" rel="noopener">Termos de Uso</a>
+              <a class="termosLink" href="./termos.html" target="_blank" rel="noopener">
+                Termos de Uso
+              </a>
               (autorizo o uso da minha imagem no mural e entendo que o site não se responsabiliza por envios de terceiros).
             </span>
           </label>
 
-          <!-- PAGAMENTO (aparece só depois dos 100 pioneiros aprovados) -->
+          <!-- PAGAMENTO (depois dos 100) -->
           <div id="pagamentoBox" class="pay hidden">
-            <p class="payTitle">Após os 100 pioneiros, o envio custa <strong>R$ 1,00</strong>.</p>
-            <p class="payText">Para manter o projeto ativo e preservar os registros, o envio custa R$1.</p>
+            <p class="payTitle">
+              Após os 100 pioneiros, o envio custa <strong>R$ 1,00</strong>
+              <span class="paySub"> (para manter o projeto ativo e preservar os registros)</span>
+            </p>
 
-            <div class="payCode">
-              <div class="payRow">
-                <div>
-                  <div class="payLabel">PIX (chave):</div>
-                  <div id="pixKey" class="payKey"></div>
-                </div>
-                <button id="btnCopyPix" type="button" class="btn-mini">COPIAR</button>
-              </div>
+            <div class="payRow">
+              <div class="payCode" id="payCode">PIX (chave): c616ef49-60b6-42eb-acc9-0ef28dc2de56</div>
+              <button id="btnCopyPix" type="button" class="btn-mini">COPIAR</button>
             </div>
 
-            <label class="lbl">Comprovante (print) — obrigatório</label>
+            <label class="lbl">Comprovante (print) – obrigatório</label>
             <input id="comprovante" class="inp" type="file" accept="image/*" />
-          </div>
-
-          <div id="previewWrap" class="preview hidden">
-            <img id="previewImg" alt="preview" />
           </div>
 
           <p id="msg" class="msg"></p>
@@ -97,39 +103,46 @@
       </div>
     </div>
 
-    <!-- MODAL SURPRESA (clicar na foto) -->
-    <div id="viewModal" class="modal hidden">
-      <div class="modal-card view-card">
-        <div class="modal-head">
-          <h3 id="viewTitle">Registro</h3>
-          <button id="fecharView" class="x">✕</button>
+    <!-- MODAL VER (SURPRESA) -->
+    <div id="modalVer" class="modal hidden">
+      <div class="modal-card modal-view">
+        <button id="fecharVer" class="x x-float">✕</button>
+
+        <div class="view-img">
+          <img id="viewFoto" alt="foto" />
         </div>
 
-        <div class="viewBody">
-          <div class="viewImgWrap">
-            <img id="viewImg" alt="foto" />
-            <div id="viewBadges" class="viewBadges"></div>
+        <div class="view-body">
+          <div class="view-top">
+            <span id="viewSelo" class="chip"></span>
+            <span id="viewNum" class="chip chip-num"></span>
           </div>
 
-          <div class="viewText">
-            <div class="viewName" id="viewName"></div>
-            <div class="viewMeta" id="viewMeta"></div>
-            <div class="viewMsg" id="viewMsg"></div>
-          </div>
+          <h3 id="viewNome" class="view-nome"></h3>
+
+          <p id="viewMemorial" class="view-memorial hidden"></p>
+          <p id="viewMsg" class="view-msg hidden"></p>
+
+          <p id="viewData" class="view-data"></p>
         </div>
       </div>
     </div>
 
     <section id="mural" class="mural">
       <h2 class="subtitle"><span class="emoji">🔥</span> MURAL DA ETERNIDADE</h2>
-      <div id="grid" class="grid"></div>
-      <p id="muralHint" class="mutedCenter">Clique em uma foto.</p>
+
+      <div class="gridWrap">
+        <div id="grid" class="grid"></div>
+      </div>
+
+      <p class="muralHint">Clique em uma foto.</p>
     </section>
 
     <footer class="footer">
       Projeto Independente por Mateus Ayala © <span id="ano"></span>
-      <a class="adminLink" href="./admin.html" target="_blank" rel="noopener">Admin</a>
+      <a class="adminLink" href="./admin.html">Admin</a>
     </footer>
+
   </main>
 
   <script type="module" src="./app.js"></script>

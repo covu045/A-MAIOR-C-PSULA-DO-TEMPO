@@ -12,7 +12,6 @@ import {
   serverTimestamp,
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 import {
   getStorage,
   ref,
@@ -20,9 +19,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-/* =========================
-   CONFIG (JÁ COM SEUS DADOS)
-========================= */
+/* ====== Firebase Config (SEU) ====== */
 const firebaseConfig = {
   apiKey: "AIzaSyDxtp2inskZ8qrjGk6KcSZo7PkvkwVHTy4",
   authDomain: "a-maior-capsula-do-tempo.firebaseapp.com",
@@ -37,63 +34,66 @@ const ADMIN_EMAIL = "mateusgoncalvesayala@gmail.com";
 const PIX_KEY = "c616ef49-60b6-42eb-acc9-0ef28dc2de56";
 
 const TOTAL_PIONEIROS = 100;
-const META_PATH = "meta/contadores";
-const LS_MY_DOC = "capsula_meu_docid_v2";
+const META_REF = "meta/contadores";
+const LS_MY_ID = "capsula_meu_envio_id_v2";
 
-/* ========================= */
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-/* UI */
 const grid = document.getElementById("grid");
 const vagasTexto = document.getElementById("vagasTexto");
-const modal = document.getElementById("modal");
+
+const modalEnviar = document.getElementById("modalEnviar");
 const btnQuero = document.getElementById("btnQuero");
-const fecharModal = document.getElementById("fecharModal");
+const fecharEnviar = document.getElementById("fecharEnviar");
+
 const btnVerMinha = document.getElementById("btnVerMinha");
 
 const form = document.getElementById("form");
 const nomeEl = document.getElementById("nome");
-const fotoEl = document.getElementById("foto");
-const mensagemEl = document.getElementById("mensagem");
-const memorialEl = document.getElementById("memorial");
-const termosEl = document.getElementById("termos");
 const msgEl = document.getElementById("msg");
-const enviarBtn = document.getElementById("enviar");
-
+const termosEl = document.getElementById("termos");
+const fotoEl = document.getElementById("foto");
 const previewWrap = document.getElementById("previewWrap");
 const previewImg = document.getElementById("previewImg");
+const enviarBtn = document.getElementById("enviar");
+
+const mensagemEl = document.getElementById("mensagem");
+
+const memorialEl = document.getElementById("memorial");
+const memorialBox = document.getElementById("memorialBox");
+const memorialParaEl = document.getElementById("memorialPara");
 
 const pagamentoBox = document.getElementById("pagamentoBox");
 const comprovanteEl = document.getElementById("comprovante");
-const pixKeyEl = document.getElementById("pixKey");
+const payCode = document.getElementById("payCode");
 const btnCopyPix = document.getElementById("btnCopyPix");
 
-const viewModal = document.getElementById("viewModal");
-const fecharView = document.getElementById("fecharView");
-const viewImg = document.getElementById("viewImg");
-const viewBadges = document.getElementById("viewBadges");
-const viewName = document.getElementById("viewName");
-const viewMeta = document.getElementById("viewMeta");
+const modalVer = document.getElementById("modalVer");
+const fecharVer = document.getElementById("fecharVer");
+const viewFoto = document.getElementById("viewFoto");
+const viewNome = document.getElementById("viewNome");
+const viewSelo = document.getElementById("viewSelo");
+const viewNum = document.getElementById("viewNum");
 const viewMsg = document.getElementById("viewMsg");
+const viewMemorial = document.getElementById("viewMemorial");
+const viewData = document.getElementById("viewData");
 
 document.getElementById("ano").textContent = new Date().getFullYear();
-pixKeyEl.textContent = PIX_KEY;
 
-/* Estado */
-let modoPago = false; // após 100 pioneiros aprovados
-let lastDocIds = new Set(); // para animar novos cards
+let modoPago = false; // após 100 pioneiros
 
-/* Helpers */
-function setMsg(texto, ok=false){
-  msgEl.textContent = texto;
+/* ===== UI helpers ===== */
+function setMsg(text, ok=false){
+  msgEl.textContent = text;
   msgEl.className = "msg " + (ok ? "ok" : "err");
 }
-function openModal(){
-  modal.classList.remove("hidden");
-  setMsg("", true);
 
+function openEnviar(){
+  modalEnviar.classList.remove("hidden");
+  setMsg("", true);
+  // estado pagamento
   if(modoPago){
     pagamentoBox.classList.remove("hidden");
     comprovanteEl.required = true;
@@ -102,23 +102,18 @@ function openModal(){
     comprovanteEl.required = false;
   }
 }
-function closeModal(){ modal.classList.add("hidden"); }
+function closeEnviar(){
+  modalEnviar.classList.add("hidden");
+}
 
-btnQuero.addEventListener("click", openModal);
-fecharModal.addEventListener("click", closeModal);
-modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
+btnQuero.addEventListener("click", openEnviar);
+fecharEnviar.addEventListener("click", closeEnviar);
+modalEnviar.addEventListener("click", (e)=>{ if(e.target === modalEnviar) closeEnviar(); });
 
-btnCopyPix.addEventListener("click", async () => {
-  try{
-    await navigator.clipboard.writeText(PIX_KEY);
-    btnCopyPix.textContent = "COPIADO ✓";
-    setTimeout(()=> btnCopyPix.textContent = "COPIAR", 1200);
-  }catch{
-    alert("Não consegui copiar automaticamente. Copie manualmente: " + PIX_KEY);
-  }
-});
+fecharVer.addEventListener("click", ()=> modalVer.classList.add("hidden"));
+modalVer.addEventListener("click", (e)=>{ if(e.target === modalVer) modalVer.classList.add("hidden"); });
 
-fotoEl.addEventListener("change", () => {
+fotoEl.addEventListener("change", ()=>{
   const f = fotoEl.files?.[0];
   if(!f) return;
   const url = URL.createObjectURL(f);
@@ -126,7 +121,23 @@ fotoEl.addEventListener("change", () => {
   previewWrap.classList.remove("hidden");
 });
 
-/* Compressão automática */
+memorialEl.addEventListener("change", ()=>{
+  if(memorialEl.checked) memorialBox.classList.remove("hidden");
+  else memorialBox.classList.add("hidden");
+});
+
+payCode.textContent = `PIX (chave): ${PIX_KEY}`;
+btnCopyPix.addEventListener("click", async ()=>{
+  try{
+    await navigator.clipboard.writeText(PIX_KEY);
+    btnCopyPix.textContent = "COPIADO ✓";
+    setTimeout(()=> btnCopyPix.textContent = "COPIAR", 900);
+  }catch{
+    setMsg("Não consegui copiar automaticamente. Copie manualmente.", false);
+  }
+});
+
+/* ===== compressão ===== */
 async function compressImage(file, maxSize = 1200, startQuality = 0.82, maxBytes = 1.9 * 1024 * 1024) {
   const img = await new Promise((resolve, reject) => {
     const i = new Image();
@@ -155,7 +166,6 @@ async function compressImage(file, maxSize = 1200, startQuality = 0.82, maxBytes
   }
 
   let blob = await toBlob(quality);
-
   for(let tries = 0; tries < 6 && blob && blob.size > maxBytes; tries++){
     quality = Math.max(0.5, quality - 0.08);
     blob = await toBlob(quality);
@@ -165,143 +175,164 @@ async function compressImage(file, maxSize = 1200, startQuality = 0.82, maxBytes
   return blob;
 }
 
-/* Ver minha foto */
-function updateMinhaFotoButton(){
-  const myId = localStorage.getItem(LS_MY_DOC);
-  if(myId) btnVerMinha.classList.remove("hidden");
+/* ===== contadores ===== */
+async function loadMeta(){
+  const metaDoc = await getDoc(doc(db, META_REF));
+  const data = metaDoc.exists() ? metaDoc.data() : {};
+  const pioneirosAprovados = Number(data.pioneirosAprovados || 0);
+  const restam = Math.max(0, TOTAL_PIONEIROS - pioneirosAprovados);
+  vagasTexto.textContent = `Restam apenas ${restam} vagas`;
+  modoPago = pioneirosAprovados >= TOTAL_PIONEIROS;
+}
+onSnapshot(doc(db, META_REF), (s)=>{
+  const data = s.exists() ? s.data() : {};
+  const pioneirosAprovados = Number(data.pioneirosAprovados || 0);
+  const restam = Math.max(0, TOTAL_PIONEIROS - pioneirosAprovados);
+  vagasTexto.textContent = `Restam apenas ${restam} vagas`;
+  modoPago = pioneirosAprovados >= TOTAL_PIONEIROS;
+});
+await loadMeta();
+
+/* ===== “ver minha foto” ===== */
+function updateMinhaBtn(){
+  const id = localStorage.getItem(LS_MY_ID);
+  if(id) btnVerMinha.classList.remove("hidden");
   else btnVerMinha.classList.add("hidden");
 }
+updateMinhaBtn();
 
-btnVerMinha.addEventListener("click", () => {
-  const myId = localStorage.getItem(LS_MY_DOC);
+btnVerMinha.addEventListener("click", ()=>{
+  const myId = localStorage.getItem(LS_MY_ID);
   if(!myId) return;
-
   const el = grid.querySelector(`.card[data-id="${myId}"]`);
   document.getElementById("mural").scrollIntoView({ behavior:"smooth" });
-
-  if(!el) return;
-
-  el.classList.add("newCard");
-  setTimeout(()=> el.classList.remove("newCard"), 700);
-  el.scrollIntoView({ behavior:"smooth", block:"center" });
+  if(el){
+    el.classList.add("highlight");
+    el.scrollIntoView({ behavior:"smooth", block:"center" });
+    setTimeout(()=> el.classList.remove("highlight"), 1200);
+  }
 });
 
-/* MODAL SURPRESA (clicar na foto) */
-function openView(d){
-  viewModal.classList.remove("hidden");
-  viewImg.src = d.fotoURL;
-  viewName.textContent = d.nome || "Sem nome";
+/* ===== render card premium ===== */
+function makeCard(d){
+  const numero = Number(d.numero || 0); // # sempre
+  const isPioneiro = numero >= 1 && numero <= 100;
 
-  const data = d.approvedAt?.toDate ? d.approvedAt.toDate() : (d.createdAt?.toDate ? d.createdAt.toDate() : null);
-  const dataTxt = data ? data.toLocaleDateString("pt-BR") : "—";
-
-  const tipo = d.pioneiroNumero ? `PIONEIRO #${d.pioneiroNumero}` : "MEMBRO";
-  viewMeta.textContent = `Registrado em ${dataTxt}`;
-
-  const msg = (d.mensagem || "").trim();
-  viewMsg.textContent = msg.length ? msg : "…";
-
-  viewBadges.innerHTML = "";
-  const b1 = document.createElement("div");
-  b1.className = "vbadge " + (d.pioneiroNumero ? "p" : "m");
-  b1.textContent = d.pioneiroNumero ? `PIONEIRO #${d.pioneiroNumero}` : "MEMBRO";
-  viewBadges.appendChild(b1);
-
-  if(d.memorial === true){
-    const b2 = document.createElement("div");
-    b2.className = "vbadge memorial";
-    b2.textContent = "🕯️ MEMORIAL";
-    viewBadges.appendChild(b2);
-  }
-
-  if((d.nome || "").trim().toLowerCase() === "mateus ayala" || (d.nome || "").trim().toLowerCase() === "mateus gonçalves ayala"){
-    const b3 = document.createElement("div");
-    b3.className = "vbadge";
-    b3.textContent = "CRIADOR";
-    viewBadges.appendChild(b3);
-  }
-}
-
-function closeView(){ viewModal.classList.add("hidden"); }
-fecharView.addEventListener("click", closeView);
-viewModal.addEventListener("click", (e)=>{ if(e.target === viewModal) closeView(); });
-
-/* Contador pioneiros aprovados -> modo pago */
-const metaRef = doc(db, META_PATH);
-onSnapshot(metaRef, (s) => {
-  const data = s.exists() ? s.data() : { pioneirosAprovados: 0 };
-  const aprov = Number(data.pioneirosAprovados || 0);
-  const restam = Math.max(0, TOTAL_PIONEIROS - aprov);
-
-  vagasTexto.textContent = `Restam apenas ${restam} vagas`;
-
-  modoPago = aprov >= TOTAL_PIONEIROS;
-});
-
-/* Render mural (somente aprovados) */
-function makeCard(d, isNew=false){
   const card = document.createElement("div");
-  const isP = typeof d.pioneiroNumero === "number" && d.pioneiroNumero >= 1 && d.pioneiroNumero <= TOTAL_PIONEIROS;
-  card.className = "card " + (isP ? "pioneer" : "member") + (isNew ? " newCard" : "");
+  card.className = "card " + (isPioneiro ? "pioneiro" : "membro");
   card.dataset.id = d.id;
 
+  const isCreator = (d.nome || "").trim().toLowerCase() === "mateus ayala";
+
   card.innerHTML = `
-    <span class="badge-left">${isP ? "PIONEIRO" : "MEMBRO"}</span>
-    <span class="badge-right">${isP ? `#${d.pioneiroNumero}` : "∞"}</span>
-    <img src="${d.fotoURL}" alt="${(d.nome||"").replace(/"/g,"")}">
-    <p class="name">${d.nome || "—"}</p>
-    ${( (d.nome||"").trim().toLowerCase() === "mateus ayala" || (d.nome||"").trim().toLowerCase() === "mateus gonçalves ayala")
-      ? `<span class="badge-creator">CRIADOR</span>` : ``}
+    <span class="badge-left ${isCreator ? "creator" : ""}">
+      ${isCreator ? "CRIADOR" : (isPioneiro ? "PIONEIRO" : "MEMBRO")}
+    </span>
+
+    <span class="badge-right">#${numero}</span>
+
+    <img src="${d.fotoURL}" alt="${(d.nome || "Participante")}">
+
+    <div class="info">
+      <p class="name">${d.nome || "Sem nome"}</p>
+    </div>
   `;
 
-  card.addEventListener("click", () => openView(d));
+  // clique abre modal surpresa
+  card.addEventListener("click", ()=>{
+    openViewModal(d);
+  });
+
   return card;
 }
 
-const muralQ = query(
+/* ===== modal ver ===== */
+function fmtData(ts){
+  try{
+    const dt = ts?.toDate ? ts.toDate() : new Date();
+    return dt.toLocaleDateString("pt-BR", { day:"2-digit", month:"long", year:"numeric" });
+  }catch{
+    return new Date().toLocaleDateString("pt-BR");
+  }
+}
+
+function openViewModal(d){
+  viewFoto.src = d.fotoURL;
+  viewNome.textContent = d.nome || "Sem nome";
+
+  const numero = Number(d.numero || 0);
+  const isPioneiro = numero >= 1 && numero <= 100;
+  const isCreator = (d.nome || "").trim().toLowerCase() === "mateus ayala";
+
+  viewSelo.textContent = isCreator ? "CRIADOR" : (isPioneiro ? "PIONEIRO" : "MEMBRO");
+  viewNum.textContent = `#${numero}`;
+
+  // memorial
+  if(d.memorial && d.memorialPara){
+    viewMemorial.textContent = `🕯️ Em memória de ${d.memorialPara}`;
+    viewMemorial.classList.remove("hidden");
+  }else{
+    viewMemorial.classList.add("hidden");
+  }
+
+  // mensagem
+  const m = (d.mensagem || "").trim();
+  if(m){
+    viewMsg.textContent = m;
+    viewMsg.classList.remove("hidden");
+  }else{
+    viewMsg.classList.add("hidden");
+  }
+
+  viewData.textContent = `Registrado em ${fmtData(d.approvedAt || d.createdAt)}`;
+
+  modalVer.classList.remove("hidden");
+}
+
+/* ===== mural aprovado =====
+   - lê somente aprovados
+   - ordem por numero ASC (fica #1, #2, #3...)
+   (vai pedir índice: status + numero)
+*/
+const q = query(
   collection(db, "envios"),
   where("status", "==", "aprovado"),
-  orderBy("approvedAt", "desc"),
+  orderBy("numero", "asc"),
   limit(200)
 );
 
-onSnapshot(muralQ, (snap) => {
+onSnapshot(q, (snap)=>{
   const docs = snap.docs.map(x => ({ id: x.id, ...x.data() }));
   grid.innerHTML = "";
-
-  // detectar novos para animar glow curto
-  const newIds = new Set(docs.map(d=>d.id));
-  docs.forEach((d) => {
-    const isNew = lastDocIds.size && !lastDocIds.has(d.id);
-    grid.appendChild(makeCard(d, isNew));
-  });
-  lastDocIds = newIds;
+  docs.forEach(d => grid.appendChild(makeCard(d)));
 });
 
-/* Envio */
-updateMinhaFotoButton();
-
-form.addEventListener("submit", async (e) => {
+/* ===== envio ===== */
+form.addEventListener("submit", async (e)=>{
   e.preventDefault();
 
   const nome = (nomeEl.value || "").trim();
-  const foto = fotoEl.files?.[0];
   const mensagem = (mensagemEl.value || "").trim();
+  const foto = fotoEl.files?.[0];
+
   const memorial = !!memorialEl.checked;
+  const memorialPara = (memorialParaEl.value || "").trim();
 
   if(nome.length < 2) return setMsg("Digite um nome válido.");
   if(nome.length > 40) return setMsg("Nome muito grande (máx 40).");
   if(!foto) return setMsg("Selecione uma foto.");
   if(!termosEl.checked) return setMsg("Você precisa aceitar os termos.");
-  if(mensagem.length > 240) return setMsg("Mensagem muito grande (máx 240).");
-  if(!foto.type.startsWith("image/")) return setMsg("Arquivo inválido. Envie uma imagem.");
 
-  // se modo pago: exige comprovante
-  let comprovantePath = "";
+  if(mensagem.length > 240) return setMsg("Mensagem muito grande (máx 240).");
+  if(/https?:\/\//i.test(mensagem)) return setMsg("Sem links na mensagem.");
+
+  if(memorial && memorialPara.length < 2) return setMsg("No modo memorial, preencha o nome (em memória de...).");
+
+  // modo pago exige comprovante
+  let comprovanteFile = null;
   if(modoPago){
-    const comp = comprovanteEl.files?.[0];
-    if(!comp) return setMsg("Após os 100 pioneiros, envie o comprovante do Pix.", false);
-    if(!comp.type.startsWith("image/")) return setMsg("Comprovante inválido. Envie uma imagem.", false);
+    comprovanteFile = comprovanteEl.files?.[0];
+    if(!comprovanteFile) return setMsg("Após os 100 pioneiros, envie o comprovante do Pix.", false);
   }
 
   enviarBtn.disabled = true;
@@ -309,53 +340,55 @@ form.addEventListener("submit", async (e) => {
   setMsg("Enviando... aguarde", true);
 
   try{
-    // 1) Foto principal (compress)
-    const fotoBlob = await compressImage(foto);
+    // 1) foto (compress + upload)
+    const blob = await compressImage(foto, 1400, 0.82);
     const safeName = nome.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30);
     const fotoName = `${Date.now()}-${safeName}.jpg`;
-    const fotoRef = ref(storage, `mural/${fotoName}`);
-    await uploadBytes(fotoRef, fotoBlob, { contentType: "image/jpeg" });
+    const fotoPath = `mural/${fotoName}`;
+    const fotoRef = ref(storage, fotoPath);
+    await uploadBytes(fotoRef, blob, { contentType: "image/jpeg" });
     const fotoURL = await getDownloadURL(fotoRef);
 
-    // 2) Se modo pago: upload comprovante (salva PATH, não URL)
+    // 2) comprovante (se modo pago) - privado
+    let comprovantePath = undefined;
     if(modoPago){
-      const comp = comprovanteEl.files[0];
-      const compBlob = await compressImage(comp, 1400, 0.85, 1.9 * 1024 * 1024);
-      const compName = `${Date.now()}-comprovante.jpg`;
+      const compBlob = await compressImage(comprovanteFile, 1400, 0.85);
+      const compName = `${Date.now()}-comp-${safeName}.jpg`;
       comprovantePath = `comprovantes/${compName}`;
       const compRef = ref(storage, comprovantePath);
       await uploadBytes(compRef, compBlob, { contentType: "image/jpeg" });
     }
 
-    // 3) Cria envio (sempre pendente / pendente_pagamento)
+    // 3) cria envio pendente / pendente_pagamento
     const status = modoPago ? "pendente_pagamento" : "pendente";
 
     const docRef = await addDoc(collection(db, "envios"), {
       nome,
-      fotoURL,
-      mensagem: mensagem || "",
+      mensagem,
       memorial,
+      memorialPara,
       status,
-      comprovantePath: modoPago ? comprovantePath : "",
-      pioneiroNumero: null,
       createdAt: serverTimestamp(),
-      approvedAt: null
+      fotoURL,
+      fotoPath,
+      ...(comprovantePath ? { comprovantePath } : {})
     });
 
-    localStorage.setItem(LS_MY_DOC, docRef.id);
-    updateMinhaFotoButton();
+    localStorage.setItem(LS_MY_ID, docRef.id);
+    updateMinhaBtn();
 
     setMsg(modoPago
-      ? "Recebido! Seu envio está pendente de confirmação do Pix ✅"
-      : "Recebido! Seu envio está pendente de aprovação ✅", true
-    );
+      ? "Recebido! Agora aguarde a aprovação do admin ✅"
+      : "Recebido! Aguarde aprovação para aparecer no mural ✅"
+    , true);
 
     form.reset();
     previewWrap.classList.add("hidden");
-    comprovanteEl.value = "";
+    memorialBox.classList.add("hidden");
+    pagamentoBox.classList.add("hidden");
 
-    setTimeout(() => {
-      closeModal();
+    setTimeout(()=>{
+      closeEnviar();
       document.getElementById("mural").scrollIntoView({ behavior:"smooth" });
     }, 700);
 
@@ -368,7 +401,7 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-/* PWA opcional */
+/* ===== PWA opcional ===== */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").catch(() => {});

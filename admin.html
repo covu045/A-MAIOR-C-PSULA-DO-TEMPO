@@ -1,50 +1,96 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin — Cápsula do Tempo</title>
   <link rel="stylesheet" href="./style.css"/>
-  <meta name="theme-color" content="#000000" />
+  <meta name="theme-color" content="#000000"/>
 </head>
 <body>
   <div class="bg-glow"></div>
 
-  <main class="wrap adminWrap">
-    <header class="adminHead">
+  <main class="wrap">
+
+    <section class="adminTop">
       <div>
         <h1 class="adminTitle">Painel Admin</h1>
-        <p class="mutedSmall">Aprovar / rejeitar envios. Comprovantes são privados (só admin).</p>
+        <p class="adminSub">Aprovar / rejeitar envios. Comprovantes são privados (só admin).</p>
       </div>
+
       <div class="adminActions">
-        <button id="btnNotif" class="btn-mini">ATIVAR NOTIFICAÇÃO</button>
-        <button id="btnLogin" class="btn-cta">ENTRAR COM GOOGLE</button>
-        <button id="btnLogout" class="btn-ghost hidden">SAIR</button>
+        <button id="btnNotif" class="btn-ghost">ATIVAR NOTIFICAÇÃO</button>
+        <button id="btnLogin" class="btn-cta">ENTRAR</button>
+        <button id="btnSair" class="btn-ghost hidden">SAIR</button>
       </div>
-    </header>
+    </section>
 
     <section class="adminStats">
-      <div class="statCard">
+      <div class="stat">
         <div class="statLabel">Pioneiros aprovados</div>
-        <div class="statValue" id="statPioneiros">0</div>
+        <div id="statPioneiros" class="statValue">0</div>
       </div>
-      <div class="statCard">
+      <div class="stat">
+        <div class="statLabel">Aprovados (total)</div>
+        <div id="statTotal" class="statValue">0</div>
+      </div>
+      <div class="stat">
         <div class="statLabel">Pendentes</div>
-        <div class="statValue" id="statPendentes">0</div>
+        <div id="statPendentes" class="statValue">0</div>
       </div>
     </section>
 
-    <section class="adminSection">
-      <h2 class="adminH2">Pendentes</h2>
-      <div id="listaPendentes" class="adminList"></div>
+    <section class="adminCols">
+      <div class="col">
+        <h2 class="colTitle">Pendentes</h2>
+        <div id="listaPendentes" class="list"></div>
+      </div>
+
+      <div class="col">
+        <h2 class="colTitle">Aprovados recentes</h2>
+        <div id="listaAprovados" class="list"></div>
+      </div>
     </section>
 
-    <section class="adminSection">
-      <h2 class="adminH2">Aprovados recentes</h2>
-      <div id="listaAprovados" class="adminList"></div>
-    </section>
+    <!-- Modal admin ver detalhes -->
+    <div id="adminModal" class="modal hidden">
+      <div class="modal-card modal-view">
+        <button id="adminFechar" class="x x-float">✕</button>
 
-    <audio id="notifyAudio" src="./sounds/notify.mp3" preload="auto"></audio>
+        <div class="view-img">
+          <img id="adminFoto" alt="foto" />
+        </div>
+
+        <div class="view-body">
+          <div class="view-top">
+            <span id="adminSelo" class="chip"></span>
+            <span id="adminNum" class="chip chip-num"></span>
+          </div>
+
+          <h3 id="adminNome" class="view-nome"></h3>
+          <p id="adminMemorial" class="view-memorial hidden"></p>
+          <p id="adminMsg" class="view-msg hidden"></p>
+
+          <div id="adminComprovanteBox" class="adminComp hidden">
+            <div class="adminCompTop">
+              <span class="adminCompTitle">Comprovante (privado)</span>
+              <button id="adminAbrirComp" class="btn-mini" type="button">ABRIR</button>
+            </div>
+            <p class="hint">Só funciona logado como admin.</p>
+          </div>
+
+          <p id="adminData" class="view-data"></p>
+
+          <div id="adminBtns" class="adminBtns">
+            <button id="btnAprovar" class="btn-cta">APROVAR</button>
+            <button id="btnRejeitar" class="btn-ghost">REJEITAR</button>
+          </div>
+
+          <p id="adminMsgStatus" class="msg"></p>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script type="module" src="./admin.js"></script>
