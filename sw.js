@@ -1,4 +1,4 @@
-const CACHE_NAME = "capsula-v6";
+const CACHE_NAME = "capsula-v7";
 
 const CORE = [
   "./",
@@ -29,13 +29,9 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
 
   if (req.mode === "navigate") {
-    event.respondWith(
-      fetch(req).catch(() => caches.match("./index.html"))
-    );
+    event.respondWith(fetch(req).catch(() => caches.match("./index.html")));
     return;
   }
 
-  event.respondWith(
-    caches.match(req).then((cached) => cached || fetch(req))
-  );
+  event.respondWith(caches.match(req).then((cached) => cached || fetch(req)));
 });

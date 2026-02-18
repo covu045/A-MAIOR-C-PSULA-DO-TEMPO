@@ -10,8 +10,7 @@ import {
   onSnapshot,
   serverTimestamp,
   runTransaction,
-  updateDoc,
-  getDoc
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   getAuth,
@@ -133,7 +132,6 @@ onAuthStateChanged(auth, (user)=>{
 
 /* ===== notificações ===== */
 btnNotif.addEventListener("click", async ()=>{
-  // desbloqueia áudio
   try{
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     await ctx.resume();
@@ -196,7 +194,6 @@ onSnapshot(qPend, (snap)=>{
 
   statPendentes.textContent = docs.length;
 
-  // notificar quando aumentar (só se já carregou antes)
   if(lastPendentesCount !== 0 && docs.length > lastPendentesCount){
     softBeep();
     notify("Novo envio pendente", "Abra o painel para aprovar.");
@@ -221,7 +218,7 @@ onSnapshot(qAprov, (snap)=>{
   docs.forEach(d => listaAprovados.appendChild(makeItem(d, "aprovado")));
 });
 
-/* ===== modal admin ver ===== */
+/* ===== modal ===== */
 adminFechar.addEventListener("click", ()=> adminModal.classList.add("hidden"));
 adminModal.addEventListener("click", (e)=>{ if(e.target === adminModal) adminModal.classList.add("hidden"); });
 
@@ -232,7 +229,6 @@ function openModal(d){
   adminFoto.src = d.fotoURL;
   adminNome.textContent = d.nome || "Sem nome";
 
-  // selo e numero (se já aprovado)
   if(d.status === "aprovado"){
     adminNum.textContent = `#${d.numero}`;
     adminSelo.textContent = d.numero <= TOTAL_PIONEIROS ? "PIONEIRO" : "MEMBRO";
@@ -241,7 +237,6 @@ function openModal(d){
     adminSelo.textContent = d.status === "pendente_pagamento" ? "PAGAMENTO" : "PENDENTE";
   }
 
-  // memorial
   if(d.memorial && d.memorialPara){
     adminMemorial.textContent = `🕯️ Em memória de ${d.memorialPara}`;
     adminMemorial.classList.remove("hidden");
@@ -249,7 +244,6 @@ function openModal(d){
     adminMemorial.classList.add("hidden");
   }
 
-  // msg
   const m = (d.mensagem || "").trim();
   if(m){
     adminMsg.textContent = m;
@@ -260,7 +254,6 @@ function openModal(d){
 
   adminData.textContent = `Criado em: ${fmtData(d.createdAt)}${d.approvedAt ? ` • Aprovado em: ${fmtData(d.approvedAt)}` : ""}`;
 
-  // comprovante (privado)
   if(d.status === "pendente_pagamento" && d.comprovantePath){
     adminComprovanteBox.classList.remove("hidden");
     adminAbrirComp.onclick = async ()=>{
@@ -279,7 +272,6 @@ function openModal(d){
     adminComprovanteBox.classList.add("hidden");
   }
 
-  // botões
   const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
   btnAprovar.disabled = !isAdmin;
   btnRejeitar.disabled = !isAdmin;
@@ -287,11 +279,7 @@ function openModal(d){
   adminModal.classList.remove("hidden");
 }
 
-/* ===== Aprovação com transação
-   - incrementa aprovadosTotal sempre
-   - pioneirosAprovados só até 100
-   - define numero = aprovadosTotal (vira #101+ depois)
-*/
+/* ===== Aprovação com transação ===== */
 btnAprovar.addEventListener("click", async ()=>{
   if(!selectedDoc) return;
   if(!currentUser || currentUser.email !== ADMIN_EMAIL) return setStatus("Você não é admin.", false);
@@ -307,12 +295,8 @@ btnAprovar.addEventListener("click", async ()=>{
       const pioneiros = Number(meta.pioneirosAprovados || 0);
       const total = Number(meta.aprovadosTotal || 0);
 
-      const nextTotal = total + 1;         // # sempre
+      const nextTotal = total + 1;
       const nextPioneiros = pioneiros < TOTAL_PIONEIROS ? pioneiros + 1 : pioneiros;
-
-      const isPioneiro = nextTotal <= TOTAL_PIONEIROS; // porque #1..#100
-      // obs: a lógica principal é numero=nextTotal
-      // pioneirosAprovados controla “restam vagas”
 
       tx.update(envioRef, {
         status: "aprovado",
@@ -325,12 +309,11 @@ btnAprovar.addEventListener("click", async ()=>{
         pioneirosAprovados: nextPioneiros
       }, { merge: true });
 
-      return { nextTotal, nextPioneiros, isPioneiro };
+      return { nextTotal };
     });
 
     setStatus(`Aprovado! Virou #${res.nextTotal} ✅`, true);
     adminModal.classList.add("hidden");
-
   }catch(err){
     console.error(err);
     setStatus("Erro ao aprovar. Veja o console.", false);
