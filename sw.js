@@ -1,4 +1,4 @@
-const CACHE_NAME = "capsula-v7";
+const CACHE_NAME = "capsula-v10";
 
 const CORE = [
   "./",
