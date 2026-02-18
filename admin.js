@@ -2,24 +2,34 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
   getFirestore,
   collection,
+  doc,
   query,
   where,
   orderBy,
   limit,
   onSnapshot,
-  doc,
-  runTransaction,
+  getDoc,
   updateDoc,
-  deleteDoc
+  deleteDoc,
+  serverTimestamp,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+import {
+  getStorage,
+  ref,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+/* CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyDxtp2inskZ8qrjGk6KcSZo7PkvkwVHTy4",
   authDomain: "a-maior-capsula-do-tempo.firebaseapp.com",
@@ -31,159 +41,247 @@ const firebaseConfig = {
 };
 
 const ADMIN_EMAIL = "mateusgoncalvesayala@gmail.com";
-
+const TOTAL_PIONEIROS = 100;
+const META_PATH = "meta/contadores";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-
-document.getElementById("ano").textContent = new Date().getFullYear();
+const storage = getStorage(app);
 
 const btnLogin = document.getElementById("btnLogin");
 const btnLogout = document.getElementById("btnLogout");
-const adminStatus = document.getElementById("adminStatus");
+const btnNotif = document.getElementById("btnNotif");
 
-const pendentesWrap = document.getElementById("pendentes");
-const aprovadosWrap = document.getElementById("aprovados");
+const statPioneiros = document.getElementById("statPioneiros");
+const statPendentes = document.getElementById("statPendentes");
 
-const META_REF = doc(db, "meta", "contadores");
-const TOTAL_PIONEIROS = 100;
+const listaPendentes = document.getElementById("listaPendentes");
+const listaAprovados = document.getElementById("listaAprovados");
 
-function isAdmin(user){
-  return user && user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+const audioEl = document.getElementById("notifyAudio");
+
+let isAdmin = false;
+let lastPendingCount = 0;
+
+function fmtDate(ts){
+  const d = ts?.toDate ? ts.toDate() : null;
+  return d ? d.toLocaleString("pt-BR") : "—";
 }
 
+btnNotif.addEventListener("click", async () => {
+  try{
+    if(!("Notification" in window)) return alert("Seu navegador não suporta notificação.");
+    const p = await Notification.requestPermission();
+    if(p === "granted") btnNotif.textContent = "NOTIFICAÇÃO ATIVA ✓";
+    else alert("Notificação negada. O som ainda funciona.");
+  }catch{
+    alert("Não foi possível ativar notificação.");
+  }
+});
+
 btnLogin.addEventListener("click", async () => {
-  const provider = new GoogleAuthProvider();
-  await signInWithPopup(auth, provider);
+  const prov = new GoogleAuthProvider();
+  await signInWithPopup(auth, prov);
 });
 
 btnLogout.addEventListener("click", async () => {
   await signOut(auth);
 });
 
-function cardHtml(d){
-  const msg = (d.mensagem || "").trim();
-  const comp = (d.comprovanteURL || "").trim();
-  const pioneiroNum = Number.isFinite(d.pioneiroNumero) ? d.pioneiroNumero : null;
-
-  return `
-    <div class="admin-card">
-      <img src="${d.fotoURL}" alt="${d.nome}">
-      <div class="admin-body">
-        <p class="admin-title">${d.nome}</p>
-        <p class="admin-meta">Status: <strong>${d.status}</strong> ${pioneiroNum ? `· PIONEIRO #${pioneiroNum}` : ""}</p>
-        ${msg ? `<p class="admin-msg">“${msg}”</p>` : `<p class="admin-msg" style="opacity:.6;">(sem mensagem)</p>`}
-
-        ${comp ? `<p class="admin-meta">Comprovante: <a href="${comp}" target="_blank" rel="noopener">abrir</a></p>` : ""}
-
-        <div class="admin-buttons">
-          <button class="aprovar" data-action="aprovar" data-id="${d.id}">APROVAR</button>
-          <button class="remover" data-action="remover" data-id="${d.id}">REMOVER</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function renderList(el, items){
-  el.innerHTML = items.map(cardHtml).join("");
-}
-
-async function aprovarEnvio(id){
-  // Aprovação com transação:
-  // - Se pioneirosAprovados < 100 => define pioneiroNumero = +1 e incrementa meta
-  // - Se já >=100 => aprova como MEMBRO (pioneiroNumero permanece null)
-  const envioRef = doc(db, "envios", id);
-
-  await runTransaction(db, async (tx) => {
-    const metaSnap = await tx.get(META_REF);
-    const meta = metaSnap.exists() ? metaSnap.data() : { pioneirosAprovados: 0 };
-    const usados = Number(meta.pioneirosAprovados || 0);
-
-    let pioneiroNumero = null;
-    let newMeta = usados;
-
-    if(usados < TOTAL_PIONEIROS){
-      pioneiroNumero = usados + 1;
-      newMeta = pioneiroNumero;
-      tx.set(META_REF, { pioneirosAprovados: newMeta }, { merge: true });
-    }
-
-    tx.update(envioRef, {
-      status: "aprovado",
-      pioneiroNumero: pioneiroNumero
-    });
-  });
-}
-
-async function removerEnvio(id){
-  await deleteDoc(doc(db, "envios", id));
-}
-
-function attachActions(container){
-  container.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-action]");
-    if(!btn) return;
-
-    const action = btn.dataset.action;
-    const id = btn.dataset.id;
-
-    btn.disabled = true;
-
-    try{
-      if(action === "aprovar") await aprovarEnvio(id);
-      if(action === "remover") await removerEnvio(id);
-    }catch(err){
-      console.error(err);
-      alert("Erro: " + (err?.message || "falha"));
-    }finally{
-      btn.disabled = false;
-    }
-  });
-}
-
-attachActions(pendentesWrap);
-attachActions(aprovadosWrap);
-
 onAuthStateChanged(auth, (user) => {
-  if(!isAdmin(user)){
-    btnLogin.classList.remove("hidden");
-    btnLogout.classList.add("hidden");
-    adminStatus.textContent = user ? "Você não é admin neste painel." : "Você precisa entrar com Google.";
+  isAdmin = !!user && user.email === ADMIN_EMAIL;
 
-    pendentesWrap.innerHTML = `<p class="line" style="opacity:.7;">Faça login com o e-mail admin.</p>`;
-    aprovadosWrap.innerHTML = "";
+  btnLogin.classList.toggle("hidden", isAdmin);
+  btnLogout.classList.toggle("hidden", !isAdmin);
+
+  if(!isAdmin){
+    listaPendentes.innerHTML = `<div class="mutedSmall">Faça login com o Google do admin.</div>`;
+    listaAprovados.innerHTML = "";
     return;
   }
 
-  btnLogin.classList.add("hidden");
-  btnLogout.classList.remove("hidden");
-  adminStatus.textContent = `Logado como admin: ${user.email}`;
+  startListeners();
+});
 
-  // Pendentes: pendente e pendente_pagamento
-  const qPend = query(
-    collection(db, "envios"),
-    where("status", "in", ["pendente", "pendente_pagamento"]),
-    orderBy("createdAt", "desc"),
-    limit(200)
-  );
+let started = false;
+function startListeners(){
+  if(started) return;
+  started = true;
 
-  onSnapshot(qPend, (snap) => {
-    const docs = snap.docs.map(x => ({ id: x.id, ...x.data() }));
-    renderList(pendentesWrap, docs);
+  const metaRef = doc(db, META_PATH);
+  onSnapshot(metaRef, (s) => {
+    const data = s.exists() ? s.data() : { pioneirosAprovados: 0 };
+    statPioneiros.textContent = String(Number(data.pioneirosAprovados || 0));
   });
 
-  // Aprovados
-  const qAprov = query(
+  // Pendentes: pendente + pendente_pagamento
+  const pendQ = query(
+    collection(db, "envios"),
+    where("status", "in", ["pendente","pendente_pagamento"]),
+    orderBy("createdAt", "desc"),
+    limit(60)
+  );
+
+  onSnapshot(pendQ, (snap) => {
+    const docs = snap.docs.map(x => ({ id: x.id, ...x.data() }));
+    listaPendentes.innerHTML = "";
+    statPendentes.textContent = String(docs.length);
+
+    // som + notificação quando chega novo
+    if(lastPendingCount && docs.length > lastPendingCount){
+      try{
+        audioEl.currentTime = 0;
+        audioEl.play().catch(()=>{});
+      }catch{}
+
+      if("Notification" in window && Notification.permission === "granted"){
+        new Notification("Novo envio pendente", { body: "Chegou um envio para aprovar." });
+      }
+    }
+    lastPendingCount = docs.length;
+
+    docs.forEach((d) => listaPendentes.appendChild(renderItem(d, true)));
+  });
+
+  // Aprovados recentes
+  const apQ = query(
     collection(db, "envios"),
     where("status", "==", "aprovado"),
-    orderBy("createdAt", "desc"),
-    limit(200)
+    orderBy("approvedAt", "desc"),
+    limit(20)
   );
 
-  onSnapshot(qAprov, (snap) => {
+  onSnapshot(apQ, (snap) => {
     const docs = snap.docs.map(x => ({ id: x.id, ...x.data() }));
-    renderList(aprovadosWrap, docs);
+    listaAprovados.innerHTML = "";
+    docs.forEach((d) => listaAprovados.appendChild(renderItem(d, false)));
   });
-});
+}
+
+function renderItem(d, isPending){
+  const wrap = document.createElement("div");
+  wrap.className = "adminItem";
+
+  const msg = (d.mensagem || "").trim();
+  const memorial = d.memorial === true;
+
+  wrap.innerHTML = `
+    <div class="adminItemTop">
+      <div class="adminThumb"><img src="${d.fotoURL}" alt=""></div>
+      <div class="adminInfo">
+        <div class="adminName">${(d.nome || "—").toUpperCase()}</div>
+        <div class="adminMeta">
+          ${isPending ? `Status: <strong>${d.status}</strong>` : `Aprovado: <strong>${d.pioneiroNumero ? "PIONEIRO #" + d.pioneiroNumero : "MEMBRO"}</strong>`}
+          <br/>Criado: ${fmtDate(d.createdAt)}
+          ${d.approvedAt ? `<br/>Aprovado: ${fmtDate(d.approvedAt)}` : ``}
+          ${memorial ? `<br/>🕯️ <strong>MEMORIAL</strong>` : ``}
+        </div>
+        ${msg ? `<div class="adminMsg">“${escapeHtml(msg)}”</div>` : ``}
+      </div>
+    </div>
+
+    <div class="adminBtns">
+      ${isPending ? `
+        <button class="btnOk" data-act="aprovar">APROVAR</button>
+        <button class="btnNo" data-act="rejeitar">REJEITAR</button>
+      ` : ``}
+
+      ${d.comprovantePath ? `<button class="btnLink" data-act="vercomp">VER COMPROVANTE</button>` : ``}
+      <button class="btnLink" data-act="abrirfoto">ABRIR FOTO</button>
+      <button class="btnLink" data-act="excluir">EXCLUIR</button>
+    </div>
+  `;
+
+  wrap.querySelectorAll("button[data-act]").forEach((b) => {
+    b.addEventListener("click", async () => {
+      const act = b.dataset.act;
+      if(act === "abrirfoto") window.open(d.fotoURL, "_blank", "noopener");
+      if(act === "vercomp") await verComprovante(d);
+      if(act === "aprovar") await aprovar(d);
+      if(act === "rejeitar") await rejeitar(d);
+      if(act === "excluir") await excluir(d);
+    });
+  });
+
+  return wrap;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+async function verComprovante(d){
+  try{
+    const r = ref(storage, d.comprovantePath);
+    const url = await getDownloadURL(r);
+    window.open(url, "_blank", "noopener");
+  }catch(e){
+    console.error(e);
+    alert("Não foi possível abrir o comprovante. Confirme se você está logado como admin.");
+  }
+}
+
+async function aprovar(d){
+  const ok = confirm("Aprovar este envio?");
+  if(!ok) return;
+
+  const metaRef = doc(db, META_PATH);
+  const envioRef = doc(db, "envios", d.id);
+
+  try{
+    await runTransaction(db, async (tx) => {
+      const metaSnap = await tx.get(metaRef);
+      const pioneirosAprovados = metaSnap.exists() ? Number(metaSnap.data().pioneirosAprovados || 0) : 0;
+
+      let pioneiroNumero = null;
+
+      if(pioneirosAprovados < TOTAL_PIONEIROS){
+        pioneiroNumero = pioneirosAprovados + 1;
+        tx.set(metaRef, { pioneirosAprovados: pioneiroNumero }, { merge: true });
+      }
+
+      tx.update(envioRef, {
+        status: "aprovado",
+        pioneiroNumero,
+        approvedAt: serverTimestamp()
+      });
+    });
+
+    alert("Aprovado ✅");
+  }catch(e){
+    console.error(e);
+    alert("Erro ao aprovar.");
+  }
+}
+
+async function rejeitar(d){
+  const ok = confirm("Rejeitar este envio? (ele NÃO aparece no mural)");
+  if(!ok) return;
+
+  try{
+    await updateDoc(doc(db, "envios", d.id), {
+      status: "rejeitado",
+      approvedAt: serverTimestamp()
+    });
+    alert("Rejeitado.");
+  }catch(e){
+    console.error(e);
+    alert("Erro ao rejeitar.");
+  }
+}
+
+async function excluir(d){
+  const ok = confirm("Excluir este envio do banco? (não apaga a imagem do Storage)");
+  if(!ok) return;
+
+  try{
+    await deleteDoc(doc(db, "envios", d.id));
+    alert("Excluído.");
+  }catch(e){
+    console.error(e);
+    alert("Erro ao excluir.");
+  }
+}
